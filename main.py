@@ -30,8 +30,10 @@ def privider_chooser(cfg):
         l.append('rev_ernie')
     if 'rev_edgegpt' in cfg and cfg['rev_edgegpt']['enable']:
         l.append('rev_edgegpt')
-    if 'openai' in cfg and cfg['openai']['key'] != None and len(cfg['openai']['key'])>0:
+    if 'openai' in cfg and cfg['openai']['enable'] and cfg['openai']['key'] != None and len(cfg['openai']['key'])>0:
         l.append('openai_official')
+    if 'alpgo':
+        l.append('alpgo_ui_admin')
     return l
 
 def check_env():
@@ -52,14 +54,14 @@ def check_env():
         print(e)
         input("按任意键退出...")
         exit()
-    
+
     # 检查key
     with open(abs_path+"configs/config.yaml", 'r', encoding='utf-8') as ymlfile:
         import yaml
         cfg = yaml.safe_load(ymlfile)
         if cfg['openai']['key'] == '' or cfg['openai']['key'] == None:
             print("请先在configs/config.yaml下添加一个可用的OpenAI Key。详情请前往https://beta.openai.com/account/api-keys")
-        if cfg['qqbot']['appid'] == '' or cfg['qqbot']['token'] == '' or cfg['qqbot']['appid'] == None or cfg['qqbot']['token'] == None: 
+        if cfg['qqbot']['appid'] == '' or cfg['qqbot']['token'] == '' or cfg['qqbot']['appid'] == None or cfg['qqbot']['token'] == None:
             print("请先在configs/config.yaml下完善appid和token令牌(在https://q.qq.com/上注册一个QQ机器人即可获得)")
 
 def get_platform():

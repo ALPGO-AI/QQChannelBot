@@ -56,7 +56,8 @@ direct_message_mode: true
 
 # 自定义回复前缀，如[Rev]或其他，务必加引号以防止不必要的bug。
 reply_prefix:
-  openai_official: "[ALPGO_AI]"
+  alpgo_ui_admin: "[ALPGO]"
+  openai_official: "[GPT]"
   rev_chatgpt: "[Rev]"
   rev_edgegpt: "[RevBing]"
 
@@ -73,6 +74,8 @@ baidu_aip:
 
 ###############语言模型设置#################
 
+alpgo:
+  enable: true
 
 # OpenAI官方API
 # 注意：已支持多key自动切换，方法：
@@ -86,6 +89,7 @@ baidu_aip:
 # https://github.com/Soulter/QQChannelChatGPT/issues/42
 # 设置为none则表示使用官方默认api地址
 openai:
+  enable: false
   key:
     -
   # 这里是GPT配置，语言模型默认使用gpt-3.5-turbo

@@ -65,6 +65,7 @@ version = '3.0'
 
 # 语言模型
 REV_CHATGPT = 'rev_chatgpt'
+ALPGO_UI_ADMIN = 'alpgo_ui_admin'
 OPENAI_OFFICIAL = 'openai_official'
 REV_ERNIE = 'rev_ernie'
 REV_EDGEGPT = 'rev_edgegpt'
@@ -107,7 +108,7 @@ def new_sub_thread(func, args=()):
 # 写入统计信息
 def toggle_count(at: bool, message):
     global stat_file
-    try: 
+    try:
         if str(message.guild_id) not in count:
             count[str(message.guild_id)] = {
                 'count': 1,
@@ -167,6 +168,7 @@ def initBot(cfg, prov):
     global chatgpt, provider, rev_chatgpt, baidu_judge, rev_edgegpt, chosen_provider
     global reply_prefix, gpt_config, config, uniqueSession, frequency_count, frequency_time,announcement, direct_message_mode, version
     global command_openai_official, command_rev_chatgpt, command_rev_edgegpt,reply_prefix, keywords
+    global command_alpgo_ui_admin
     provider = prov
     config = cfg
     if 'reply_prefix' in cfg:
@@ -182,7 +184,7 @@ def initBot(cfg, prov):
             chosen_provider = REV_CHATGPT
         else:
             input("[System-err] 请退出本程序, 然后在配置文件中填写rev_ChatGPT相关配置")
-        
+
     if REV_EDGEGPT in prov:
         from model.provider.provider_rev_edgegpt import ProviderRevEdgeGPT
         from model.command.command_rev_edgegpt import CommandRevEdgeGPT
@@ -195,6 +197,13 @@ def initBot(cfg, prov):
         chatgpt = ProviderOpenAIOfficial(cfg['openai'])
         command_openai_official = CommandOpenAIOfficial(chatgpt)
         chosen_provider = OPENAI_OFFICIAL
+    if ALPGO_UI_ADMIN in prov:
+        from model.provider.provider_alpgo_ui_admin import ProviderAlpgoUiAdmin
+        from model.command.command_alpgo_ui_admin import CommandAlpgoUiAdmin
+        chatgpt = ProviderAlpgoUiAdmin(cfg['alpgo'])
+        command_alpgo_ui_admin = CommandAlpgoUiAdmin(chatgpt)
+        chosen_provider = ALPGO_UI_ADMIN
+
 
     # 得到关键词
     if os.path.exists("keyword.json"):
@@ -207,16 +216,16 @@ def initBot(cfg, prov):
             res = f.read()
             if res in prov:
                 chosen_provider = res
-        
+
     # 百度内容审核
     if 'baidu_aip' in cfg and 'enable' in cfg['baidu_aip'] and cfg['baidu_aip']['enable']:
-        try: 
+        try:
             baidu_judge = BaiduJudge(cfg['baidu_aip'])
             print("[System] 百度内容审核初始化成功")
         except BaseException as e:
             input("[System] 百度内容审核初始化失败: " + str(e))
             exit()
-        
+
     # 统计上传
     if is_upload_log:
         # 读取object_id
@@ -229,7 +238,7 @@ def initBot(cfg, prov):
         object_id_file.close()
         # 创建上传定时器线程
         threading.Thread(target=upload, daemon=True).start()
-    
+
     # 得到私聊模式配置
     if 'direct_message_mode' in cfg:
         direct_message_mode = cfg['direct_message_mode']
@@ -242,7 +251,7 @@ def initBot(cfg, prov):
             frequency_count = cfg['limit']['count']
         if 'time' in cfg['limit']:
             frequency_time = cfg['limit']['time']
-    
+
     # 得到公告配置
     if 'notice' in cfg:
         print('[System] 公告配置: '+cfg['notice'])
@@ -292,7 +301,7 @@ def initBot(cfg, prov):
 
 def run_qqchan_bot(cfg, loop, qqchannel_bot):
     asyncio.set_event_loop(loop)
-    intents = botpy.Intents(public_guild_messages=True, direct_message=True) 
+    intents = botpy.Intents(public_guild_messages=True, direct_message=True)
     global client
     client = botClient(intents=intents)
     try:
@@ -370,11 +379,11 @@ def oper_msg(message, at=False, msg_ref = None, platform = None):
             print("[GOCQ-BOT] 接收到消息："+ str(message.message[0].text))
         elif isinstance(message.message[0], At):
             print("[GOCQ-BOT] 接收到消息："+ str(message.message[1].text))
-            
+
         user_id = message.group_id
         user_name = message.group_id
         global gocq_loop
-    
+
     # 检查发言频率
     if not check_frequency(user_id):
         qqchannel_bot.send_qq_msg(message, f'{user_name}的发言超过频率限制(╯▔皿▔)╯。\n{frequency_time}秒内只能提问{frequency_count}次。')
@@ -414,7 +423,7 @@ def oper_msg(message, at=False, msg_ref = None, platform = None):
         session_id = message.group_id
         # todo: 暂时将所有人设为管理员
         role = "admin"
-        
+
     logf.write("[QQBOT] "+ qq_msg+'\n')
     logf.flush()
 
@@ -435,7 +444,7 @@ def oper_msg(message, at=False, msg_ref = None, platform = None):
         if not check:
             send_message(platform, message,  f"你的提问得到的回复未通过【百度AI内容审核】服务, 不予回复。\n\n{msg}", msg_ref=msg_ref, gocq_loop=gocq_loop, qqchannel_bot=qqchannel_bot, gocq_bot=gocq_bot)
             return
-    
+
     # 检查是否是更换语言模型的请求
     temp_switch = ""
     if qq_msg.startswith('/bing') or qq_msg.startswith('/gpt') or qq_msg.startswith('/revgpt'):
@@ -446,6 +455,8 @@ def oper_msg(message, at=False, msg_ref = None, platform = None):
             target = OPENAI_OFFICIAL
         elif qq_msg.startswith('/revgpt'):
             target = REV_CHATGPT
+        elif qq_msg.startswith('/alpgo'):
+            target = ALPGO_UI_ADMIN
         l = qq_msg.split(' ')
         if len(l) > 1 and l[1] != "":
             # 临时对话模式，先记录下之前的语言模型，回答完毕后再切回
@@ -462,6 +473,20 @@ def oper_msg(message, at=False, msg_ref = None, platform = None):
             return
 
     chatgpt_res = ""
+
+    if chosen_provider == ALPGO_UI_ADMIN:
+        hit, command_result = command_alpgo_ui_admin.check_command(qq_msg, session_id, user_name, role)
+        print(f"{hit} {command_result}")
+        # hit: 是否触发了指令.
+        if not hit:
+            # 请求ChatGPT获得结果
+            try:
+                chatgpt_res = chatgpt.text_chat(qq_msg, session_id)
+                if ALPGO_UI_ADMIN in reply_prefix:
+                    chatgpt_res = reply_prefix[ALPGO_UI_ADMIN] + chatgpt_res
+            except (BaseException) as e:
+                print("[System-Err] ALPGO UI Admin API错误。原因如下:\n"+str(e))
+                send_message(platform, message, f"ALPGO UI Admin API错误。原因如下：\n{str(e)} \n前往官方频道反馈~", msg_ref=msg_ref, gocq_loop=gocq_loop, qqchannel_bot=qqchannel_bot, gocq_bot=gocq_bot)
 
     if chosen_provider == OPENAI_OFFICIAL:
         hit, command_result = command_openai_official.check_command(qq_msg, session_id, user_name, role)
@@ -518,7 +543,7 @@ def oper_msg(message, at=False, msg_ref = None, platform = None):
     # 切换回原来的语言模型
     if temp_switch != "":
         chosen_provider = temp_switch
-        
+
     # 指令回复
     if hit:
         # 检查指令. command_result是一个元组：(指令调用是否成功, 指令返回的文本结果, 指令类型)
@@ -533,7 +558,7 @@ def oper_msg(message, at=False, msg_ref = None, platform = None):
                 if len(command_result) == 3 and command_result[2] == 'draw':
                     for i in command_result[1]:
                         send_message(platform, message, i, msg_ref=msg_ref, gocq_loop=gocq_loop, qqchannel_bot=qqchannel_bot, gocq_bot=gocq_bot)
-                else: 
+                else:
                     try:
                         send_message(platform, message, command_result[1], msg_ref=msg_ref, gocq_loop=gocq_loop, qqchannel_bot=qqchannel_bot, gocq_bot=gocq_bot)
                     except BaseException as e:
@@ -544,7 +569,7 @@ def oper_msg(message, at=False, msg_ref = None, platform = None):
                 send_message(platform, message, f"指令调用错误: \n{command_result[1]}", msg_ref=msg_ref, gocq_loop=gocq_loop, qqchannel_bot=qqchannel_bot, gocq_bot=gocq_bot)
 
         return
-    
+
     if chatgpt_res == "":
         return
 
@@ -563,7 +588,7 @@ def oper_msg(message, at=False, msg_ref = None, platform = None):
         if not check:
             send_message(platform, message, f"你的提问得到的回复【百度内容审核】未通过，不予回复。\n\n{msg}", msg_ref=msg_ref, gocq_loop=gocq_loop, qqchannel_bot=qqchannel_bot, gocq_bot=gocq_bot)
             return
-        
+
     # 发送qq信息
     try:
         send_message(platform, message, chatgpt_res, msg_ref=msg_ref, gocq_loop=gocq_loop, qqchannel_bot=qqchannel_bot, gocq_bot=gocq_bot)
@@ -587,7 +612,7 @@ def get_stat(self):
             guild_count += 1
             guild_msg_count += v['count']
             guild_direct_msg_count += v['direct_count']
-        
+
         session_count = 0
 
         f = open(abs_path+"configs/session", "r", encoding="utf-8")
@@ -598,7 +623,7 @@ def get_stat(self):
         return guild_count, guild_msg_count, guild_direct_msg_count, session_count
     except:
         return -1, -1, -1, -1
-    
+
 
 # QQ频道机器人
 class botClient(botpy.Client):
@@ -629,7 +654,7 @@ class gocqClient():
             new_sub_thread(oper_msg, (source, True, None, PLATFORM_GOCQ))
         else:
             return
-        
+
     @gocq_app.receiver("GroupMemberIncrease")
     async def _(app: CQHTTP, source: GroupMemberIncrease):
         await app.sendGroupMessage(source.group_id, [

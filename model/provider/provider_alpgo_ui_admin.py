@@ -10,27 +10,16 @@ import threading
 abs_path = os.path.dirname(os.path.realpath(sys.argv[0])) + '/'
 key_record_path = abs_path+'chatgpt_key_record'
 
-class ProviderOpenAIOfficial(Provider):
+class ProviderAlpgoUiAdmin(Provider):
     def __init__(self, cfg):
         self.key_list = []
-        if 'api_base' in cfg and cfg['api_base'] != 'none' and cfg['api_base'] != '':
-            openai.api_base = cfg['api_base']
-        if cfg['key'] != '' and cfg['key'] != None:
-            print("[System] 读取ChatGPT Key成功")
-            self.key_list = cfg['key']
-        else:
-            input("[System] 请先去完善ChatGPT的Key。详情请前往https://beta.openai.com/account/api-keys")
 
         # init key record
         self.init_key_record()
 
-        self.chatGPT_configs = cfg['chatGPTConfigs']
-        print(f'[System] 加载ChatGPTConfigs: {self.chatGPT_configs}')
         self.openai_configs = cfg
         # 会话缓存
         self.session_dict = {}
-        # 最大缓存token
-        self.max_tokens = cfg['total_tokens_limit']
         # 历史记录持久化间隔时间
         self.history_dump_interval = 20
 
@@ -110,107 +99,11 @@ class ProviderOpenAIOfficial(Provider):
         cache_data_list, new_record, req = self.wrap(prompt, session_id)
         retry = 0
         response = None
-        while retry < 5:
-            try:
-                response = openai.ChatCompletion.create(
-                    messages=req,
-                    **self.chatGPT_configs
-                )
-                break
-            except Exception as e:
-                print(e)
-                if 'You exceeded' in str(e) or 'Billing hard limit has been reached' in str(e) or 'No API key provided' in str(e) or 'Incorrect API key provided' in str(e):
-                    print("[System] 当前Key已超额或者不正常,正在切换")
-                    self.key_stat[openai.api_key]['exceed'] = True
-                    self.save_key_record()
-
-                    response, is_switched = self.handle_switch_key(req)
-                    if not is_switched:
-                        # 所有Key都超额或不正常
-                        raise e
-                    else:
-                        break
-                if 'maximum context length' in str(e):
-                    print("token超限, 清空对应缓存")
-                    self.session_dict[session_id] = []
-                    cache_data_list, new_record, req = self.wrap(prompt, session_id)
-                retry+=1
-        if retry >= 5:
-            raise BaseException("连接超时")
-
-        self.key_stat[openai.api_key]['used'] += response['usage']['total_tokens']
-        self.save_key_record()
-        print("[ChatGPT] "+str(response["choices"][0]["message"]["content"]))
-        chatgpt_res = str(response["choices"][0]["message"]["content"]).strip()
-        current_usage_tokens = response['usage']['total_tokens']
-
-        # 超过指定tokens， 尽可能的保留最多的条目，直到小于max_tokens
-        if current_usage_tokens > self.max_tokens:
-            t = current_usage_tokens
-            index = 0
-            while t > self.max_tokens:
-                if index >= len(cache_data_list):
-                    break
-                # 保留人格信息
-                if 'user' in cache_data_list[index] and cache_data_list[index]['user']['role'] != 'system':
-                    t -= int(cache_data_list[index]['single_tokens'])
-                    del cache_data_list[index]
-                else:
-                    index += 1
-            # 删除完后更新相关字段
-            self.session_dict[session_id] = cache_data_list
-            # cache_prompt = get_prompts_by_cache_list(cache_data_list)
-
-        # 添加新条目进入缓存的prompt
-        new_record['AI'] = {
-            'role': 'assistant',
-            'content': chatgpt_res,
-        }
-        new_record['usage_tokens'] = current_usage_tokens
-        if len(cache_data_list) > 0:
-            new_record['single_tokens'] = current_usage_tokens - int(cache_data_list[-1]['usage_tokens'])
-        else:
-            new_record['single_tokens'] = current_usage_tokens
-        cache_data_list.append(new_record)
-
-        self.session_dict[session_id] = cache_data_list
-
-        return chatgpt_res
+        return "Hello world " + prompt
 
     def image_chat(self, prompt, img_num = 1, img_size = "1024x1024"):
         retry = 0
         image_url = ''
-        while retry < 5:
-            try:
-                # print("test1")
-                response = openai.Image.create(
-                    prompt=prompt,
-                    n=img_num,
-                    size=img_size
-                )
-                # print("test2")
-                image_url = []
-                for i in range(img_num):
-                    image_url.append(response['data'][i]['url'])
-                print(image_url)
-                break
-            except Exception as e:
-                print(e)
-                if 'You exceeded' in str(e) or 'Billing hard limit has been reached' in str(
-                        e) or 'No API key provided' in str(e) or 'Incorrect API key provided' in str(e):
-                    print("[System] 当前Key已超额或者不正常,正在切换")
-                    self.key_stat[openai.api_key]['exceed'] = True
-                    self.save_key_record()
-
-                    response, is_switched = self.handle_switch_key(req)
-                    if not is_switched:
-                        # 所有Key都超额或不正常
-                        raise e
-                    else:
-                        break
-                retry += 1
-        if retry >= 5:
-            raise BaseException("连接超时")
 
         return image_url
 
