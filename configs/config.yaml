@@ -76,6 +76,7 @@ baidu_aip:
 
 alpgo:
   enable: true
+  image_url: IMAGE_URL_PLACEHOLDER
 
 # OpenAI官方API
 # 注意：已支持多key自动切换，方法：

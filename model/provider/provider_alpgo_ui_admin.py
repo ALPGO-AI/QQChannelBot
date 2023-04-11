@@ -6,6 +6,7 @@ import sys
 from cores.database.conn import dbConn
 from model.provider.provider import Provider
 import threading
+import requests,json
 
 abs_path = os.path.dirname(os.path.realpath(sys.argv[0])) + '/'
 key_record_path = abs_path+'chatgpt_key_record'
@@ -17,7 +18,7 @@ class ProviderAlpgoUiAdmin(Provider):
         # init key record
         self.init_key_record()
 
-        self.openai_configs = cfg
+        self.alpgo_configs = cfg
         # 会话缓存
         self.session_dict = {}
         # 历史记录持久化间隔时间
@@ -103,8 +104,13 @@ class ProviderAlpgoUiAdmin(Provider):
 
     def image_chat(self, prompt, img_num = 1, img_size = "1024x1024"):
         retry = 0
-        image_url = 'https://outputs-1251764741.cos.ap-shanghai.myqcloud.com/8b5374ac9ecf906bac8daf06e0dddcdc.png'
-
+        url=self.alpgo_configs['image_url']
+        image_url = ''
+        response = requests.get(url=url)
+        rsJson = json.loads(response.text)
+        #Loop along dictionary keys
+        for key in rsJson:
+            image_url = rsJson[key]
         return image_url
 
     def forget(self, session_id) -> bool:
@@ -224,7 +230,7 @@ class ProviderAlpgoUiAdmin(Provider):
                 return None, False
 
     def getConfigs(self):
-        return self.openai_configs
+        return self.alpgo_configs
 
     def save_key_record(self):
         with open(key_record_path, 'w', encoding='utf-8') as f:
