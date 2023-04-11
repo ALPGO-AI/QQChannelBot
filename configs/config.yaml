@@ -10,8 +10,8 @@
 # enable为true则启用，false则不启用
 qqbot:
   enable: true
-  appid: 
-  token: 
+  appid: APP_ID_PLACEHOLDER
+  token: TOKEN_PLACEHOLDER
 
 # QQ机器人
 # enable为true则启用，false则不启用
@@ -19,7 +19,7 @@ qqbot:
 # 文档：https://docs.go-cqhttp.org/
 # 请将go-cqhttp的配置文件的sever部分粘贴为以下内容，否则无法使用
 # 请先启动go-cqhttp再启动本程序
-# 
+#
 # servers:
 #   - http:
 #       host: 127.0.0.1
@@ -64,9 +64,9 @@ reply_prefix:
 # 新用户免费5万次调用。https://cloud.baidu.com/doc/ANTIPORN/index.html
 baidu_aip:
   enable: false
-  app_id: 
-  api_key: 
-  secret_key: 
+  app_id:
+  api_key:
+  secret_key:
 
 
 
@@ -86,9 +86,8 @@ baidu_aip:
 # https://github.com/Soulter/QQChannelChatGPT/issues/42
 # 设置为none则表示使用官方默认api地址
 openai:
-  key: 
-    - 
-  api_base: none
+  key:
+    -
   # 这里是GPT配置，语言模型默认使用gpt-3.5-turbo
   chatGPTConfigs:
     model: gpt-3.5-turbo
@@ -97,7 +96,7 @@ openai:
     top_p: 1
     frequency_penalty: 0
     presence_penalty: 0
-    
+
   total_tokens_limit: 5000
 
 # 逆向文心一言【暂时不可用，请勿使用】
@@ -134,4 +133,4 @@ rev_edgegpt:
 rev_ChatGPT:
   enable: false
   account:
-    - access_token: 
+    - access_token:

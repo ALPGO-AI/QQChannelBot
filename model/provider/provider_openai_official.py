@@ -20,7 +20,7 @@ class ProviderOpenAIOfficial(Provider):
             self.key_list = cfg['key']
         else:
             input("[System] 请先去完善ChatGPT的Key。详情请前往https://beta.openai.com/account/api-keys")
-        
+
         # init key record
         self.init_key_record()
 
@@ -53,7 +53,7 @@ class ProviderOpenAIOfficial(Provider):
         if res == '':
             count = {}
         else:
-            try: 
+            try:
                 count = json.loads(res)
             except BaseException:
                 pass
@@ -110,114 +110,115 @@ class ProviderOpenAIOfficial(Provider):
         cache_data_list, new_record, req = self.wrap(prompt, session_id)
         retry = 0
         response = None
-        while retry < 5:
-            try:
-                response = openai.ChatCompletion.create(
-                    messages=req,
-                    **self.chatGPT_configs
-                )
-                break
-            except Exception as e:
-                print(e)
-                if 'You exceeded' in str(e) or 'Billing hard limit has been reached' in str(e) or 'No API key provided' in str(e) or 'Incorrect API key provided' in str(e):
-                    print("[System] 当前Key已超额或者不正常,正在切换")
-                    self.key_stat[openai.api_key]['exceed'] = True
-                    self.save_key_record()
+        return "Hello world"
+        # while retry < 5:
+        #     try:
+        #         response = openai.ChatCompletion.create(
+        #             messages=req,
+        #             **self.chatGPT_configs
+        #         )
+        #         break
+        #     except Exception as e:
+        #         print(e)
+        #         if 'You exceeded' in str(e) or 'Billing hard limit has been reached' in str(e) or 'No API key provided' in str(e) or 'Incorrect API key provided' in str(e):
+        #             print("[System] 当前Key已超额或者不正常,正在切换")
+        #             self.key_stat[openai.api_key]['exceed'] = True
+        #             self.save_key_record()
 
-                    response, is_switched = self.handle_switch_key(req)
-                    if not is_switched:
-                        # 所有Key都超额或不正常
-                        raise e
-                    else:
-                        break
-                if 'maximum context length' in str(e):
-                    print("token超限, 清空对应缓存")
-                    self.session_dict[session_id] = []
-                    cache_data_list, new_record, req = self.wrap(prompt, session_id)
-                retry+=1
-        if retry >= 5:
-            raise BaseException("连接超时")
-        
-        self.key_stat[openai.api_key]['used'] += response['usage']['total_tokens']
-        self.save_key_record()
-        print("[ChatGPT] "+str(response["choices"][0]["message"]["content"]))
-        chatgpt_res = str(response["choices"][0]["message"]["content"]).strip()
-        current_usage_tokens = response['usage']['total_tokens']
+        #             response, is_switched = self.handle_switch_key(req)
+        #             if not is_switched:
+        #                 # 所有Key都超额或不正常
+        #                 raise e
+        #             else:
+        #                 break
+        #         if 'maximum context length' in str(e):
+        #             print("token超限, 清空对应缓存")
+        #             self.session_dict[session_id] = []
+        #             cache_data_list, new_record, req = self.wrap(prompt, session_id)
+        #         retry+=1
+        # if retry >= 5:
+        #     raise BaseException("连接超时")
 
-        # 超过指定tokens， 尽可能的保留最多的条目，直到小于max_tokens
-        if current_usage_tokens > self.max_tokens:
-            t = current_usage_tokens
-            index = 0
-            while t > self.max_tokens:
-                if index >= len(cache_data_list):
-                    break
-                # 保留人格信息
-                if 'user' in cache_data_list[index] and cache_data_list[index]['user']['role'] != 'system':
-                    t -= int(cache_data_list[index]['single_tokens'])
-                    del cache_data_list[index]
-                else:
-                    index += 1
-            # 删除完后更新相关字段
-            self.session_dict[session_id] = cache_data_list
-            # cache_prompt = get_prompts_by_cache_list(cache_data_list)
+        # self.key_stat[openai.api_key]['used'] += response['usage']['total_tokens']
+        # self.save_key_record()
+        # print("[ChatGPT] "+str(response["choices"][0]["message"]["content"]))
+        # chatgpt_res = str(response["choices"][0]["message"]["content"]).strip()
+        # current_usage_tokens = response['usage']['total_tokens']
 
-        # 添加新条目进入缓存的prompt
-        new_record['AI'] = {
-            'role': 'assistant',
-            'content': chatgpt_res,
-        }
-        new_record['usage_tokens'] = current_usage_tokens
-        if len(cache_data_list) > 0:
-            new_record['single_tokens'] = current_usage_tokens - int(cache_data_list[-1]['usage_tokens'])
-        else:
-            new_record['single_tokens'] = current_usage_tokens
-        cache_data_list.append(new_record)
+        # # 超过指定tokens， 尽可能的保留最多的条目，直到小于max_tokens
+        # if current_usage_tokens > self.max_tokens:
+        #     t = current_usage_tokens
+        #     index = 0
+        #     while t > self.max_tokens:
+        #         if index >= len(cache_data_list):
+        #             break
+        #         # 保留人格信息
+        #         if 'user' in cache_data_list[index] and cache_data_list[index]['user']['role'] != 'system':
+        #             t -= int(cache_data_list[index]['single_tokens'])
+        #             del cache_data_list[index]
+        #         else:
+        #             index += 1
+        #     # 删除完后更新相关字段
+        #     self.session_dict[session_id] = cache_data_list
+        #     # cache_prompt = get_prompts_by_cache_list(cache_data_list)
 
-        self.session_dict[session_id] = cache_data_list
+        # # 添加新条目进入缓存的prompt
+        # new_record['AI'] = {
+        #     'role': 'assistant',
+        #     'content': chatgpt_res,
+        # }
+        # new_record['usage_tokens'] = current_usage_tokens
+        # if len(cache_data_list) > 0:
+        #     new_record['single_tokens'] = current_usage_tokens - int(cache_data_list[-1]['usage_tokens'])
+        # else:
+        #     new_record['single_tokens'] = current_usage_tokens
+        # cache_data_list.append(new_record)
 
-        return chatgpt_res
-        
+        # self.session_dict[session_id] = cache_data_list
+
+        # return chatgpt_res
+
     def image_chat(self, prompt, img_num = 1, img_size = "1024x1024"):
         retry = 0
         image_url = ''
-        while retry < 5:
-            try:
-                # print("test1")
-                response = openai.Image.create(
-                    prompt=prompt,
-                    n=img_num,
-                    size=img_size
-                )
-                # print("test2")
-                image_url = []
-                for i in range(img_num):
-                    image_url.append(response['data'][i]['url'])
-                print(image_url)
-                break
-            except Exception as e:
-                print(e)
-                if 'You exceeded' in str(e) or 'Billing hard limit has been reached' in str(
-                        e) or 'No API key provided' in str(e) or 'Incorrect API key provided' in str(e):
-                    print("[System] 当前Key已超额或者不正常,正在切换")
-                    self.key_stat[openai.api_key]['exceed'] = True
-                    self.save_key_record()
+        # while retry < 5:
+        #     try:
+        #         # print("test1")
+        #         response = openai.Image.create(
+        #             prompt=prompt,
+        #             n=img_num,
+        #             size=img_size
+        #         )
+        #         # print("test2")
+        #         image_url = []
+        #         for i in range(img_num):
+        #             image_url.append(response['data'][i]['url'])
+        #         print(image_url)
+        #         break
+        #     except Exception as e:
+        #         print(e)
+        #         if 'You exceeded' in str(e) or 'Billing hard limit has been reached' in str(
+        #                 e) or 'No API key provided' in str(e) or 'Incorrect API key provided' in str(e):
+        #             print("[System] 当前Key已超额或者不正常,正在切换")
+        #             self.key_stat[openai.api_key]['exceed'] = True
+        #             self.save_key_record()
 
-                    response, is_switched = self.handle_switch_key(req)
-                    if not is_switched:
-                        # 所有Key都超额或不正常
-                        raise e
-                    else:
-                        break
-                retry += 1
-        if retry >= 5:
-            raise BaseException("连接超时")
-                
+        #             response, is_switched = self.handle_switch_key(req)
+        #             if not is_switched:
+        #                 # 所有Key都超额或不正常
+        #                 raise e
+        #             else:
+        #                 break
+        #         retry += 1
+        # if retry >= 5:
+        #     raise BaseException("连接超时")
+
         return image_url
 
     def forget(self, session_id) -> bool:
         self.session_dict[session_id] = []
         return True
-    
+
     '''
     获取缓存的会话
     '''
@@ -238,14 +239,14 @@ class ProviderOpenAIOfficial(Provider):
             if divide:
                 prompts += "----------\n"
         return prompts
-    
-        
+
+
     def get_user_usage_tokens(self,cache_list):
         usage_tokens = 0
         for item in cache_list:
             usage_tokens += int(item['single_tokens'])
         return usage_tokens
-        
+
     '''
     获取统计信息
     '''
@@ -262,7 +263,7 @@ class ProviderOpenAIOfficial(Provider):
                 guild_count += 1
                 guild_msg_count += v['count']
                 guild_direct_msg_count += v['direct_count']
-            
+
             session_count = 0
 
             f = open(abs_path+"configs/session", "r", encoding="utf-8")
@@ -294,7 +295,7 @@ class ProviderOpenAIOfficial(Provider):
                 req_list.append(i['AI'])
         req_list.append(new_record['user'])
         return context, new_record, req_list
-    
+
     def handle_switch_key(self, req):
         # messages = [{"role": "user", "content": prompt}]
         while True:
@@ -329,10 +330,10 @@ class ProviderOpenAIOfficial(Provider):
             else:
                 print("[System] 在切换key时程序异常。")
                 return None, False
-                
+
     def getConfigs(self):
         return self.openai_configs
-    
+
     def save_key_record(self):
         with open(key_record_path, 'w', encoding='utf-8') as f:
             json.dump(self.key_stat, f)
@@ -341,7 +342,7 @@ class ProviderOpenAIOfficial(Provider):
         return self.key_stat
     def get_key_list(self):
         return self.key_list
-    
+
     # 添加key
     def append_key(self, key, sponsor):
         self.key_list.append(key)
@@ -395,4 +396,3 @@ class ProviderOpenAIOfficial(Provider):
                 if openai.api_key == None:
                     self.handle_switch_key("")
             self.save_key_record()
-
