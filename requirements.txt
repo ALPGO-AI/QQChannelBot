@@ -7,4 +7,3 @@ EdgeGPT~=0.1.22.1
 chardet
 Pillow
 GitPython
-git+https://github.com/Lxns-Network/nakuru-project.git
