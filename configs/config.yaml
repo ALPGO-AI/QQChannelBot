@@ -56,7 +56,7 @@ direct_message_mode: true
 
 # 自定义回复前缀，如[Rev]或其他，务必加引号以防止不必要的bug。
 reply_prefix:
-  openai_official: "[GPT]"
+  openai_official: "[ALPGO_AI]"
   rev_chatgpt: "[Rev]"
   rev_edgegpt: "[RevBing]"
 
