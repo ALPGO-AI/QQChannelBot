@@ -556,8 +556,7 @@ def oper_msg(message, at=False, msg_ref = None, platform = None):
             if command_result[0]:
                 # 是否是画图指令
                 if len(command_result) == 3 and command_result[2] == 'draw':
-                    for i in command_result[1]:
-                        send_message(platform, message, i, msg_ref=msg_ref, gocq_loop=gocq_loop, qqchannel_bot=qqchannel_bot, gocq_bot=gocq_bot)
+                    send_message(platform, message, command_result[1], image=command_result[1], msg_ref=msg_ref, gocq_loop=gocq_loop, qqchannel_bot=qqchannel_bot, gocq_bot=gocq_bot)
                 else:
                     try:
                         send_message(platform, message, command_result[1], msg_ref=msg_ref, gocq_loop=gocq_loop, qqchannel_bot=qqchannel_bot, gocq_bot=gocq_bot)

@@ -103,7 +103,7 @@ class ProviderAlpgoUiAdmin(Provider):
 
     def image_chat(self, prompt, img_num = 1, img_size = "1024x1024"):
         retry = 0
-        image_url = ''
+        image_url = 'https://outputs-1251764741.cos.ap-shanghai.myqcloud.com/8b5374ac9ecf906bac8daf06e0dddcdc.png'
 
         return image_url
 
