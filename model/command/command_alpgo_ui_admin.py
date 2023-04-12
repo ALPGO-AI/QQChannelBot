@@ -29,6 +29,8 @@ class CommandAlpgoUiAdmin(Command):
             return True, self.update(message, role)
         elif self.command_start_with(message, "画"):
             return True, self.draw(message)
+        elif self.command_start_with(message, "来张图"):
+            return True, self.draw(message)
         elif self.command_start_with(message, "keyword"):
             return True, self.keyword(message, role)
         elif self.command_start_with(message, "key"):
